@@ -1,28 +1,21 @@
+const request = require('supertest');
+
 const Chance = require('chance');
 const chance = new Chance();
-const request = require('supertest');
-const app = require('../src/app');
-const nodemailConfig = require('../src/nodemail-config');
 
-// jest.mock('../src/nodemail-config');
+const app = require('../src/app');
 
 describe('app', () => {
     let expectedEmail,
         expectedSubject,
         expectedText,
-        expectedParameters,
-        expectedTransporter;
+        expectedParameters;
 
     beforeEach(() => {
         expectedEmail = chance.email();
         expectedSubject = chance.word();
         expectedText = chance.word();
         expectedParameters = `to=${expectedEmail}&subject=${expectedSubject}&text=${expectedText}`;
-        expectedTransporter = {
-            sendMail: jest.fn()
-        };
-        nodemailConfig.getTransporter = jest.fn(() => expectedTransporter);
-        nodemailConfig.getMailOptions = jest.fn();
     });
 
     it('should call return a 200 when it is a valid request', async () => {
@@ -32,9 +25,9 @@ describe('app', () => {
         });
     });
 
-    it('should call use the transporter from nodemailer', async () => {
-        await request(app).get(`/?${expectedParameters}`);
-
-        expect(nodemailConfig.getTransporter).toHaveBeenCalledTimes(1);
+    it('should throw a 400 when it is not a valid request', async () => {
+        await request(app).get('/').then((response) => {
+            expect(response.status).toBe(400);
+        });
     });
 });
